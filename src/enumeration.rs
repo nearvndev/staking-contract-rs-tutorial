@@ -6,7 +6,8 @@ pub struct PoolJson {
     pub total_stake_balance: U128,
     pub total_reward: U128,
     pub total_stakers: U128,
-    pub is_paused: bool
+    pub is_paused: bool,
+    pub total_paid_reward_balance: U128
 }
 
 #[near_bindgen]
@@ -34,7 +35,8 @@ impl StakingContract {
             total_stake_balance: U128(self.total_stake_balance),
             total_reward: U128(self.pre_reward + self.internal_calculate_global_reward()),
             total_stakers: U128(self.total_staker),
-            is_paused: self.paused
+            is_paused: self.paused,
+            total_paid_reward_balance: U128(self.total_paid_reward_balance)
         }
     }
 }

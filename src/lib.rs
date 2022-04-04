@@ -1,6 +1,6 @@
 use near_sdk::collections::LookupMap;
 use near_sdk::json_types::U128;
-use near_sdk::{env, AccountId, Balance, BlockHeight, EpochHeight, near_bindgen, PanicOnDefault, BorshStorageKey, Promise};
+use near_sdk::{env, AccountId, Balance, BlockHeight, EpochHeight, near_bindgen, PanicOnDefault, BorshStorageKey, Promise, PromiseOrValue};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
 
@@ -16,6 +16,7 @@ mod account;
 mod util;
 mod internal;
 mod enumeration;
+mod core_impl;
 
 #[derive(BorshDeserialize, BorshSerialize, BorshStorageKey)]
 pub enum StorageKey {
