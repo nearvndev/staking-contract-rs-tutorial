@@ -23,6 +23,21 @@ pub enum StorageKey {
 }
 
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct StakingContractV1 {
+    pub owner_id: AccountId,
+    pub ft_contract_id: AccountId,
+    pub config: Config, // cấu hình công thức trả thưởng cho user,
+    pub total_stake_balance: Balance,
+    pub total_paid_reward_balance: Balance,
+    pub total_staker: Balance,
+    pub pre_reward: Balance,
+    pub last_block_balance_change: BlockHeight,
+    pub accounts: LookupMap<AccountId, UpgradableAccount>, // thông tin chi tiết của acount map theo account id
+    pub paused: bool,
+    pub pause_in_block: BlockHeight
+}
+
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 #[near_bindgen]
 pub struct StakingContract {
     pub owner_id: AccountId,
@@ -33,9 +48,10 @@ pub struct StakingContract {
     pub total_staker: Balance,
     pub pre_reward: Balance,
     pub last_block_balance_change: BlockHeight,
-    pub accounts: LookupMap<AccountId, Account>, // thông tin chi tiết của acount map theo account id
+    pub accounts: LookupMap<AccountId, UpgradableAccount>, // thông tin chi tiết của acount map theo account id
     pub paused: bool,
-    pub pause_in_block: BlockHeight
+    pub pause_in_block: BlockHeight,
+    pub new_data: U128
 }
 
 #[near_bindgen]
@@ -59,7 +75,8 @@ impl StakingContract {
             last_block_balance_change: env::block_index(),
             accounts: LookupMap::new(StorageKey::AccountKey),
             paused: false,
-            pause_in_block: 0
+            pause_in_block: 0,
+            new_data: U128(0)
         }
     }
 
@@ -95,6 +112,32 @@ impl StakingContract {
     pub fn is_paused(&self) -> bool {
         self.paused
     }
+
+    pub fn get_new_data(&self) -> U128 {
+        self.new_data
+    }
+
+    #[private]
+    #[init(ignore_state)]
+    pub fn migrate() -> Self {
+        let contract_v1: StakingContractV1 = env::state_read().expect("Can not read state data");
+
+        StakingContract {
+            owner_id: contract_v1.owner_id,
+            ft_contract_id: contract_v1.ft_contract_id,
+            config: contract_v1.config,
+            total_stake_balance: contract_v1.total_stake_balance,
+            total_paid_reward_balance: contract_v1.total_paid_reward_balance,
+            total_staker: contract_v1.total_staker,
+            pre_reward: contract_v1.pre_reward,
+            last_block_balance_change: contract_v1.last_block_balance_change,
+            accounts: contract_v1.accounts,
+            paused: contract_v1.paused,
+            pause_in_block: contract_v1.pause_in_block,
+            new_data: U128(10)
+        }
+    }
+
 }
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
