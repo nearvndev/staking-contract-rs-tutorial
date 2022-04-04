@@ -1,13 +1,21 @@
 use near_sdk::collections::LookupMap;
-use near_sdk::{env, AccountId, Balance, BlockHeight, EpochHeight, near_bindgen, PanicOnDefault, BorshStorageKey};
+use near_sdk::json_types::U128;
+use near_sdk::{env, AccountId, Balance, BlockHeight, EpochHeight, near_bindgen, PanicOnDefault, BorshStorageKey, Promise};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{Deserialize, Serialize};
 
 
 use crate::config::*;
 use crate::account::*;
+use crate::util::*;
+use crate::internal::*;
+use crate::enumeration::*;
+
 mod config;
 mod account;
+mod util;
+mod internal;
+mod enumeration;
 
 #[derive(BorshDeserialize, BorshSerialize, BorshStorageKey)]
 pub enum StorageKey {
@@ -26,7 +34,8 @@ pub struct StakingContract {
     pub pre_reward: Balance,
     pub last_block_balance_change: BlockHeight,
     pub accounts: LookupMap<AccountId, Account>, // thông tin chi tiết của acount map theo account id
-    pub paused: bool
+    pub paused: bool,
+    pub pause_in_block: BlockHeight
 }
 
 #[near_bindgen]
@@ -49,8 +58,42 @@ impl StakingContract {
             pre_reward: 0,
             last_block_balance_change: env::block_index(),
             accounts: LookupMap::new(StorageKey::AccountKey),
-            paused: false
+            paused: false,
+            pause_in_block: 0
         }
+    }
+
+    #[payable]
+    pub fn storage_deposit(&mut self, account_id: Option<AccountId>) {
+        assert_at_least_one_yocto();
+        let account = account_id.unwrap_or_else(|| env::predecessor_account_id());
+        let account_stake = self.accounts.get(&account);
+
+        if account_stake.is_some() {
+            // refund toàn bộ token deposit
+            refund_deposit(0);
+        } else {
+            // Tạo account mới
+            let before_storage_usage = env::storage_usage();
+            self.internal_register_account(account.clone());
+            let after_storage_usage = env::storage_usage();
+            // Refund lại token deposit còn thừa
+            refund_deposit(after_storage_usage - before_storage_usage);
+        }
+    }
+
+    pub fn storage_balance_of(&self, account_id: AccountId) -> U128 {
+        let account = self.accounts.get(&account_id);
+
+        if account.is_some() {
+            U128(1)
+        } else {
+            U128(0)
+        }
+    }
+
+    pub fn is_paused(&self) -> bool {
+        self.paused
     }
 }
 
