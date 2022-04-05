@@ -13,7 +13,8 @@ pub struct AccountV1 {
     pub unstake_available_epoch: EpochHeight
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[serde(crate="near_sdk::serde")]
 pub struct Account {
     pub stake_balance: Balance,
     pub pre_reward: Balance,
