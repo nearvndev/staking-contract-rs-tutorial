@@ -7,6 +7,7 @@ use near_sdk::serde::{Deserialize, Serialize};
 
 use crate::config::*;
 use crate::account::*;
+pub use crate::account::AccountJson;
 use crate::util::*;
 use crate::internal::*;
 use crate::enumeration::*;
